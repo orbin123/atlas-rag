@@ -1,0 +1,6 @@
+{
+  "name": "Atlas RAG",
+  "description": "Intelligent local RAG Document Question Answering System featuring searchable document libraries, chunk-level previews, staged ingestion timelines, and performance evaluations.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
