@@ -1,0 +1,61 @@
+document_id,domain,target_title_or_topic,source_url,preferred_stored_type,license_or_usage_note
+tech_01,Technology and AI,AI Risk Management Framework 1.0,https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf,PDF,U.S. Government work; credit NIST
+tech_02,Technology and AI,Generative AI Profile,https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.600-1.pdf,PDF,U.S. Government work; credit NIST
+tech_03,Technology and AI,Secure Software Development Framework,https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-218.pdf,PDF,U.S. Government work; credit NIST
+tech_04,Technology and AI,Adversarial Machine Learning Taxonomy,https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-2e2023.pdf,PDF,U.S. Government work; credit NIST
+tech_05,Technology and AI,AI RMF Playbook,https://airc.nist.gov/AI_RMF_Knowledge_Base/Playbook,TXT,U.S. Government web content; main body only
+tech_06,Technology and AI,NIST Artificial Intelligence overview,https://www.nist.gov/artificial-intelligence,TXT,U.S. Government web content; main body only
+health_01,Healthcare and biology,About Chronic Diseases,https://www.cdc.gov/chronic-disease/about/index.html,TXT,CDC material generally public domain; verify page
+health_02,Healthcare and biology,About Antimicrobial Resistance,https://www.cdc.gov/antimicrobial-resistance/about/index.html,TXT,CDC material generally public domain; verify page
+health_03,Healthcare and biology,About Genomics,https://www.cdc.gov/genomics/about/index.html,TXT,CDC material generally public domain; verify page
+health_04,Healthcare and biology,About Diabetes,https://www.cdc.gov/diabetes/about/index.html,TXT,CDC material generally public domain; verify page
+health_05,Healthcare and biology,About Heart Disease,https://www.cdc.gov/heart-disease/about/index.html,TXT,CDC material generally public domain; verify page
+health_06,Healthcare and biology,About Cancer,https://www.cdc.gov/cancer/about/index.html,TXT,CDC material generally public domain; verify page
+finance_01,Finance and economics,Global Economic Prospects,https://www.worldbank.org/en/publication/global-economic-prospects,PDF,Use report PDF with its item-level licence
+finance_02,Finance and economics,World Development Report,https://www.worldbank.org/en/publication/wdr,PDF,Use report PDF with its item-level licence
+finance_03,Finance and economics,Poverty Prosperity and Planet Report,https://www.worldbank.org/en/publication/poverty-prosperity-and-planet,PDF,Use report PDF with its item-level licence
+finance_04,Finance and economics,Global Financial Development Report,https://www.worldbank.org/en/publication/gfdr,PDF,Use report PDF with its item-level licence
+finance_05,Finance and economics,Women Business and the Law report,https://wbl.worldbank.org/en/reports,PDF,Use report PDF with its item-level licence
+finance_06,Finance and economics,Commodity Markets Outlook,https://www.worldbank.org/en/research/commodity-markets,PDF,Use report PDF with its item-level licence
+climate_01,Climate and environment,Climate change impacts,https://www.noaa.gov/education/resource-collections/climate/climate-change-impacts,TXT,U.S. Government web content; main body only
+climate_02,Climate and environment,Atmospheric carbon dioxide,https://www.noaa.gov/education/resource-collections/climate/climate-change-atmospheric-carbon-dioxide,TXT,U.S. Government web content; main body only
+climate_03,Climate and environment,Global sea level,https://www.noaa.gov/education/resource-collections/climate/climate-change-global-sea-level,TXT,U.S. Government web content; main body only
+climate_04,Climate and environment,Ocean acidification,https://www.noaa.gov/education/resource-collections/ocean-coasts/ocean-acidification,TXT,U.S. Government web content; main body only
+climate_05,Climate and environment,El Nino and La Nina,https://www.noaa.gov/education/resource-collections/weather-atmosphere/el-nino,TXT,U.S. Government web content; main body only
+climate_06,Climate and environment,IPCC AR6 Synthesis Report,https://www.ipcc.ch/report/ar6/syr/,PDF,CC BY-NC-SA 4.0
+education_01,Education,College Success chapter 1,https://openstax.org/books/college-success/pages/1-introduction,TXT,CC BY-NC-SA 4.0
+education_02,Education,College Success chapter 2,https://openstax.org/books/college-success/pages/2-introduction,TXT,CC BY-NC-SA 4.0
+education_03,Education,Introduction to Computer Science chapter 1,https://openstax.org/books/introduction-computer-science/pages/1-introduction,TXT,CC BY-NC-SA 4.0
+education_04,Education,Educational Psychology chapter 1,https://openstax.org/books/educational-psychology/pages/1-introduction,TXT,CC BY-NC-SA 4.0
+education_05,Education,College Success chapter 7,https://openstax.org/books/college-success/pages/7-introduction,TXT,CC BY-NC-SA 4.0
+education_06,Education,College Success chapter 10,https://openstax.org/books/college-success/pages/10-introduction,TXT,CC BY-NC-SA 4.0
+law_01,Law and public policy,Freedom of Expression legal report,https://www.loc.gov/item/2019669203/,PDF,Law Library of Congress collection CC0; verify item
+law_02,Law and public policy,Data Protection Law legal report,https://www.loc.gov/item/2019669204/,PDF,Law Library of Congress collection CC0; verify item
+law_03,Law and public policy,Foreign Ownership of Land legal report,https://www.loc.gov/item/2019669209/,PDF,Law Library of Congress collection CC0; verify item
+law_04,Law and public policy,Regulation of Cryptocurrency legal report,https://www.loc.gov/item/2021688760/,PDF,Law Library of Congress collection CC0; verify item
+law_05,Law and public policy,Encrypted Communications legal report,https://www.loc.gov/item/2019669207/,PDF,Law Library of Congress collection CC0; verify item
+law_06,Law and public policy,Homelessness and Public Space legal report,https://www.loc.gov/item/2019669212/,PDF,Law Library of Congress collection CC0; verify item
+history_01,History and culture,Declaration of Independence transcript,https://www.archives.gov/founding-docs/declaration-transcript,TXT,U.S. Government work; main body only
+history_02,History and culture,Constitution transcript,https://www.archives.gov/founding-docs/constitution-transcript,TXT,U.S. Government work; main body only
+history_03,History and culture,Bill of Rights transcript,https://www.archives.gov/founding-docs/bill-of-rights-transcript,TXT,U.S. Government work; main body only
+history_04,History and culture,Library of Congress collections,https://www.loc.gov/collections/,TXT,Choose an explicitly public-domain text-rich record
+history_05,History and culture,Smithsonian Open Access record,https://www.si.edu/openaccess,TXT,Choose an explicitly CC0 text-rich record
+history_06,History and culture,Chronicling America research guide,https://guides.loc.gov/chronicling-america,TXT,Verify rights statement
+space_01,Space and science,NASA Earth overview,https://science.nasa.gov/earth/,TXT,NASA web content; check page-level notice
+space_02,Space and science,NASA Exoplanets overview,https://science.nasa.gov/exoplanets/,TXT,NASA web content; check page-level notice
+space_03,Space and science,NASA Black Holes overview,https://science.nasa.gov/universe/black-holes/,TXT,NASA web content; check page-level notice
+space_04,Space and science,NASA Sun overview,https://science.nasa.gov/sun/,TXT,NASA web content; check page-level notice
+space_05,Space and science,NASA Mars overview,https://science.nasa.gov/mars/,TXT,NASA web content; check page-level notice
+space_06,Space and science,Hubble Space Telescope,https://science.nasa.gov/mission/hubble/,TXT,NASA web content; check page-level notice
+cyber_01,Cybersecurity,NIST Cybersecurity Framework 2.0,https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf,PDF,U.S. Government work; credit NIST
+cyber_02,Cybersecurity,Zero Trust Architecture,https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-207.pdf,PDF,U.S. Government work; credit NIST
+cyber_03,Cybersecurity,Computer Security Incident Handling Guide,https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-61r2.pdf,PDF,U.S. Government work; credit NIST
+cyber_04,Cybersecurity,Guide for Conducting Risk Assessments,https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-30r1.pdf,PDF,U.S. Government work; credit NIST
+cyber_05,Cybersecurity,Security and Privacy Controls,https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-53r5.pdf,PDF,U.S. Government work; credit NIST
+cyber_06,Cybersecurity,Secure Software Development Framework,https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-218.pdf,PDF,U.S. Government work; credit NIST
+business_01,Business and management,Write your business plan,https://www.sba.gov/business-guide/plan-your-business/write-your-business-plan,TXT,U.S. Government web content; main body only
+business_02,Business and management,Market research and competitive analysis,https://www.sba.gov/business-guide/plan-your-business/market-research-competitive-analysis,TXT,U.S. Government web content; main body only
+business_03,Business and management,Calculate startup costs,https://www.sba.gov/business-guide/plan-your-business/calculate-your-startup-costs,TXT,U.S. Government web content; main body only
+business_04,Business and management,Manage your business,https://www.sba.gov/business-guide/manage-your-business,TXT,U.S. Government web content; main body only
+business_05,Business and management,Grow your business,https://www.sba.gov/business-guide/grow-your-business,TXT,U.S. Government web content; main body only
+business_06,Business and management,Choose a business structure,https://www.sba.gov/business-guide/launch-your-business/choose-business-structure,TXT,U.S. Government web content; main body only
