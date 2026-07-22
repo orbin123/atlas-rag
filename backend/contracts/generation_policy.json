@@ -1,0 +1,79 @@
+{
+  "contractVersion": "1.0.0",
+  "provider": "openai",
+  "transport": "chat.completions",
+  "enabledByDefault": false,
+  "defaultBaseUrl": "https://api.openai.com/v1",
+  "customBaseUrlSupported": true,
+  "temperature": 0,
+  "timeoutSeconds": 30,
+  "maximumConcurrentRequests": 2,
+  "maximumOutputTokens": 512,
+  "sdkMaximumRetries": 1,
+  "minimumContextScore": 0.46,
+  "insufficientContextAnswer": "I don't have enough evidence in the indexed documents to answer that question.",
+  "readiness": {
+    "generationIsOptional": true,
+    "retrievalReadyWhenGenerationDisabled": true,
+    "generationReadyWhenDisabled": false,
+    "startupNetworkProbe": false
+  },
+  "scenarios": [
+    {
+      "name": "below threshold with provider disabled",
+      "topScore": 0.459999,
+      "providerReady": false,
+      "expectedHttpStatus": 200,
+      "expectedOutcome": "insufficient_context",
+      "expectedErrorCode": null,
+      "providerCalled": false
+    },
+    {
+      "name": "no retrieved sources with provider enabled",
+      "topScore": null,
+      "providerReady": true,
+      "expectedHttpStatus": 200,
+      "expectedOutcome": "insufficient_context",
+      "expectedErrorCode": null,
+      "providerCalled": false
+    },
+    {
+      "name": "at threshold with provider disabled",
+      "topScore": 0.46,
+      "providerReady": false,
+      "expectedHttpStatus": 503,
+      "expectedOutcome": "provider_unavailable",
+      "expectedErrorCode": "GENERATION_PROVIDER_UNAVAILABLE",
+      "providerCalled": false
+    },
+    {
+      "name": "above threshold with provider configured",
+      "topScore": 0.71,
+      "providerReady": true,
+      "expectedHttpStatus": 200,
+      "expectedOutcome": "generate",
+      "expectedErrorCode": null,
+      "providerCalled": true
+    },
+    {
+      "name": "configured provider times out",
+      "topScore": 0.71,
+      "providerReady": true,
+      "providerFailure": "timeout",
+      "expectedHttpStatus": 504,
+      "expectedOutcome": "provider_error",
+      "expectedErrorCode": "GENERATION_TIMEOUT",
+      "providerCalled": true
+    },
+    {
+      "name": "configured provider returns invalid citations",
+      "topScore": 0.71,
+      "providerReady": true,
+      "providerFailure": "invalid_response",
+      "expectedHttpStatus": 502,
+      "expectedOutcome": "provider_error",
+      "expectedErrorCode": "GENERATION_RESPONSE_INVALID",
+      "providerCalled": true
+    }
+  ]
+}

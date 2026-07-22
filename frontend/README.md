@@ -1,19 +1,12 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
-
 # Atlas RAG frontend
 
-A browser-only React interface for exploring a mock RAG document workspace. It has no API calls, server, database, or required secrets. Uploading a file updates in-memory demo state only; it does not send, parse, or store the file.
+React/Vite client for the local Atlas RAG FastAPI backend. Every screen reads durable backend state; uploads, deletion, chat, evidence, and evaluation are real API operations.
 
-## Run Locally
+## Run locally
 
-**Prerequisites:**  Node.js
+1. Start the backend as described in `../backend/README.md`.
+2. Copy `.env.example` to `.env` if the API is not at the default URL.
+3. Run `npm install` and `npm run dev`.
+4. Open <http://localhost:3000>. Use this hostname (rather than `127.0.0.1`) with the backend's default CORS allowlist.
 
-
-1. Install dependencies:
-   `npm install`
-2. Run the app:
-   `npm run dev`
-
-Then open [http://localhost:3000](http://localhost:3000). Use `npm run build` to create a production bundle in `dist/`.
+Use `npm test`, `npm run lint`, and `npm run build` for frontend verification. Generation is optional: when it is disabled, retrieval and all corpus/evaluation screens remain available, while supported chat questions display the backend's typed provider-unavailable error. Below-threshold questions still return the deterministic insufficient-context response.

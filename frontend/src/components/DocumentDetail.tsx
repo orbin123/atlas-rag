@@ -1,289 +1,43 @@
-import React, { useState } from 'react';
-import { 
-  ArrowLeft, 
-  FileText, 
-  Folder, 
-  User, 
-  Layers, 
-  Server, 
-  Calendar, 
-  HardDrive, 
-  Bookmark, 
-  ChevronLeft, 
-  ChevronRight, 
-  Search,
-  CheckCircle2
-} from 'lucide-react';
-import { Document, Chunk } from '../types';
-import { MOCK_CHUNKS } from '../data';
+import { useEffect, useState } from 'react';
+import { ArrowLeft, Bookmark, Calendar, ChevronLeft, ChevronRight, FileText, Folder, HardDrive, Search, Server, User } from 'lucide-react';
+import { getDocument, listDocumentChunks, listDocumentPages } from '../api/documents';
+import type { DocumentChunk, DocumentDetail as Detail, DocumentPage, Paginated } from '../types';
+import { formatBytes } from '../types';
+import { ErrorNotice, LoadingNotice } from './AsyncNotice';
 
-interface DocumentDetailProps {
-  document: Document;
-  onBack: () => void;
-}
-
-export default function DocumentDetail({ document, onBack }: DocumentDetailProps) {
-  // Page preview control
-  const [activePreviewPage, setActivePreviewPage] = useState(1);
+export default function DocumentDetail({ documentId, onBack }: { documentId: string; onBack: () => void }) {
+  const [detail, setDetail] = useState<Detail | null>(null);
+  const [preview, setPreview] = useState<DocumentPage | null>(null);
+  const [page, setPage] = useState(1);
+  const [textKind, setTextKind] = useState<'cleaned' | 'raw'>('cleaned');
+  const [chunks, setChunks] = useState<Paginated<DocumentChunk> | null>(null);
+  const [chunkPage, setChunkPage] = useState(1);
+  const [searchInput, setSearchInput] = useState('');
   const [chunkSearch, setChunkSearch] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Retrieve mock chunks for this document, fallback to a generated set if newly uploaded
-  const documentChunks: Chunk[] = MOCK_CHUNKS[document.id] || [
-    {
-      id: `${document.id}-c1`,
-      documentId: document.id,
-      documentName: document.name,
-      chunkNumber: 1,
-      pageNumber: 1,
-      text: `[STAGED PARSE CONTENT CHUNK 1] The newly ingested context file '${document.name}' has been split. Subject concerns ${document.domain} concepts. Detailed analytics track critical specifications.`,
-      status: 'indexed',
-      tokenCount: 125
-    },
-    {
-      id: `${document.id}-c2`,
-      documentId: document.id,
-      documentName: document.name,
-      chunkNumber: 2,
-      pageNumber: 2,
-      text: `[STAGED PARSE CONTENT CHUNK 2] Standard compliance structures are verified at Port 3000. Data transmission schemas execute on authorized node layers with mutual cryptographic signatures.`,
-      status: 'indexed',
-      tokenCount: 140
-    }
-  ];
+  useEffect(() => { const timer = window.setTimeout(() => { setChunkPage(1); setChunkSearch(searchInput.trim()); }, 300); return () => window.clearTimeout(timer); }, [searchInput]);
+  useEffect(() => { setLoading(true); setError(null); getDocument(documentId).then(setDetail).catch(cause => setError(cause instanceof Error ? cause.message : 'Unable to load document.')).finally(() => setLoading(false)); }, [documentId]);
+  useEffect(() => { listDocumentPages(documentId, page, textKind).then(result => setPreview(result.items[0] || null)).catch(cause => setError(cause instanceof Error ? cause.message : 'Unable to load page text.')); }, [documentId, page, textKind]);
+  useEffect(() => { listDocumentChunks(documentId, chunkPage, chunkSearch).then(setChunks).catch(cause => setError(cause instanceof Error ? cause.message : 'Unable to load chunks.')); }, [documentId, chunkPage, chunkSearch]);
 
-  // Filter chunks based on simple keyword search
-  const filteredChunks = documentChunks.filter(chunk => 
-    chunk.text.toLowerCase().includes(chunkSearch.toLowerCase()) ||
-    chunk.chunkNumber.toString().includes(chunkSearch)
-  );
-
-  // Extracted text preview pages (simulate 3 pages)
-  const simulatedPagesText: Record<number, string> = {
-    1: document.extractedTextPreview || 'Page 1 contents parsed. Key variables involve organizational metrics, local model parameters, and vector coordinate indexes. Authentication credentials verify client-side security limits.',
-    2: 'Page 2 contents: Section 4.01. Technical compliance mandates that the local repository maintains direct serializations of all parsed files. In the event of system resets, indexes are hydrated from regional backups to avoid duplicate GPU runs.',
-    3: 'Page 3 contents: In summary, the primary objective of this documentation is to streamline secure information access. Users query the Atlas vector space through similarity rankings to bypass standard unstructured document delays.'
-  };
-
-  const handleNextPage = () => {
-    if (activePreviewPage < 3) setActivePreviewPage(prev => prev + 1);
-  };
-
-  const handlePrevPage = () => {
-    if (activePreviewPage > 1) setActivePreviewPage(prev => prev - 1);
-  };
-
-  return (
-    <div className="space-y-6 animate-fade-in" id="document-detail-page">
-      
-      {/* Back button */}
-      <button 
-        onClick={onBack}
-        className="flex items-center gap-1.5 text-[10px] font-bold font-mono text-slate-400 hover:text-teal-400 transition-colors uppercase tracking-wider"
-        id="detail-back-btn"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        Back to Document Library
-      </button>
-
-      {/* Detail Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 bg-slate-900 border border-slate-800 rounded-xl">
-        <div className="flex items-start gap-4">
-          <div className={`p-3 rounded shrink-0 mt-1 ${
-            document.type === 'pdf' ? 'bg-red-500/10 text-red-400' :
-            document.type === 'docx' ? 'bg-blue-500/10 text-blue-400' :
-            'bg-emerald-500/10 text-emerald-400'
-          }`}>
-            <FileText className="w-8 h-8" />
-          </div>
-          <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-xl font-bold text-slate-200 font-display">{document.name}</h1>
-              <span className={`text-[10px] px-2.5 py-0.5 rounded font-mono uppercase tracking-wider font-bold ${
-                document.status === 'indexed' ? 'bg-teal-400/10 text-teal-400 border border-teal-500/20' : 'bg-amber-500/10 text-amber-400'
-              }`}>
-                {document.status}
-              </span>
-            </div>
-            <p className="text-xs text-slate-400 mt-1 max-w-xl">{document.description}</p>
-            
-            {/* Horizontal badge row */}
-            <div className="flex flex-wrap gap-3 mt-3">
-              <span className="inline-flex items-center gap-1 text-[10px] text-slate-300 bg-slate-850 border border-slate-700 px-2.5 py-1 rounded font-mono">
-                <Folder className="w-3 h-3 text-teal-400" />
-                {document.domain}
-              </span>
-              <span className="inline-flex items-center gap-1 text-[10px] text-slate-300 bg-slate-850 border border-slate-700 px-2.5 py-1 rounded font-mono">
-                <HardDrive className="w-3 h-3 text-teal-400" />
-                {document.fileSize}
-              </span>
-              <span className="inline-flex items-center gap-1 text-[10px] text-slate-300 bg-slate-850 border border-slate-700 px-2.5 py-1 rounded font-mono">
-                <Calendar className="w-3 h-3" />
-                Uploaded: {document.uploadDate}
-              </span>
-            </div>
-          </div>
-        </div>
+  if (loading) return <LoadingNotice label="Loading document detail…" />;
+  if (!detail) return <ErrorNotice message={error || 'Document was not found.'} retry={onBack} />;
+  return <div className="space-y-6 animate-fade-in" id="document-detail-page">
+    <button onClick={onBack} className="flex items-center gap-1.5 text-[10px] font-bold font-mono text-slate-400 hover:text-teal-400 uppercase"><ArrowLeft className="w-4 h-4" />Back to Library</button>
+    {error && <ErrorNotice message={error} />}
+    <div className="bg-slate-900 border border-slate-800 p-5 rounded-xl flex gap-4"><div className="p-3 rounded bg-teal-500/10 text-teal-400"><FileText className="w-8 h-8" /></div><div className="min-w-0"><div className="flex flex-wrap gap-2 items-center"><h1 className="text-xl font-bold text-slate-200 break-all">{detail.name}</h1><span className={`text-[10px] uppercase font-mono ${detail.status === 'indexed' ? 'text-teal-400' : detail.status === 'failed' ? 'text-red-400' : 'text-amber-400'}`}>{detail.status}</span></div><p className="text-xs text-slate-400 mt-1">{detail.description || detail.title || 'No description supplied.'}</p><div className="flex flex-wrap gap-3 mt-3 text-[10px] font-mono"><span className="flex gap-1"><Folder className="w-3 h-3 text-teal-400" />{detail.domain}</span><span className="flex gap-1"><HardDrive className="w-3 h-3" />{formatBytes(detail.sizeBytes)}</span><span className="flex gap-1"><Calendar className="w-3 h-3" />{new Date(detail.createdAt).toLocaleString()}</span></div></div></div>
+    {detail.failure && <ErrorNotice message={`${detail.failure.code}: ${detail.failure.message}`} />}
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="lg:col-span-6 space-y-6">
+        <div className="bg-slate-900 border border-slate-800 p-5 rounded-xl"><h2 className="text-[10px] font-bold tracking-widest text-slate-400 uppercase flex gap-2 mb-4"><Bookmark className="w-4 h-4 text-teal-400" />Indexing Properties</h2><div className="grid grid-cols-2 gap-3 text-xs"><Property icon={User} label="Author / Source" value={detail.author || detail.sourceKind} /><Property icon={FileText} label="Pages" value={String(detail.pageCount)} /><Property icon={Server} label="Chunks" value={String(detail.chunkCount)} /><Property icon={HardDrive} label="Embedding" value={`${detail.embedding.dimension}-D`} /><Property icon={Bookmark} label="Model" value={detail.embedding.model} /><Property icon={DatabaseIcon} label="Index Version" value={detail.indexVersion || 'Not indexed'} /></div></div>
+        <div className="bg-slate-900 border border-slate-800 p-5 rounded-xl min-h-[360px]"><div className="flex flex-wrap justify-between gap-3 border-b border-slate-800 pb-3 mb-4"><h2 className="text-[10px] font-bold uppercase font-mono text-slate-400">Extracted text</h2><div className="flex items-center gap-2"><select value={textKind} onChange={event => setTextKind(event.target.value as 'cleaned' | 'raw')} className="bg-slate-950 border border-slate-700 rounded text-[10px] p-1"><option value="cleaned">Cleaned</option><option value="raw">Raw</option></select><button disabled={page <= 1} onClick={() => setPage(value => value - 1)} className="p-1 border border-slate-700 rounded disabled:opacity-30"><ChevronLeft className="w-3 h-3" /></button><span className="text-[10px] font-mono">Page {page} / {detail.pageCount}</span><button disabled={page >= detail.pageCount} onClick={() => setPage(value => value + 1)} className="p-1 border border-slate-700 rounded disabled:opacity-30"><ChevronRight className="w-3 h-3" /></button></div></div><div className="p-4 bg-slate-950 rounded border border-slate-800 text-xs text-slate-300 leading-relaxed whitespace-pre-wrap max-h-72 overflow-y-auto">{preview?.text || 'This page contains no extracted text.'}</div>{preview && <p className="mt-3 text-[10px] text-slate-500">{preview.characterCount.toLocaleString()} characters · {preview.repeatedLinesRemoved.length} repeated margin lines removed</p>}</div>
       </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
-        {/* Left Side: Metadata Card & Extracted Text Preview (6 cols) */}
-        <div className="lg:col-span-6 space-y-6">
-          
-          {/* Metadata Grid */}
-          <div className="bg-slate-900 border border-slate-800 p-5 rounded-xl" id="detail-metadata-card">
-            <h3 className="text-[10px] font-bold tracking-widest text-slate-400 uppercase flex items-center gap-1.5 font-mono mb-4">
-              <Bookmark className="w-4 h-4 text-teal-400" />
-              Indexing Properties
-            </h3>
-            <div className="grid grid-cols-2 gap-4 text-xs font-mono font-bold uppercase">
-              <div className="p-3 bg-slate-950 rounded border border-slate-800/80">
-                <p className="text-[10px] text-slate-500 flex items-center gap-1 uppercase mb-1">
-                  <User className="w-3.5 h-3.5 text-teal-400" /> Author / Source
-                </p>
-                <p className="text-slate-200 truncate font-sans text-xs capitalize">{document.author || 'Internal Database'}</p>
-              </div>
-              <div className="p-3 bg-slate-950 rounded border border-slate-800/80">
-                <p className="text-[10px] text-slate-500 flex items-center gap-1 uppercase mb-1">
-                  <Layers className="w-3.5 h-3.5 text-teal-400" /> Total Document Pages
-                </p>
-                <p className="text-slate-200 font-bold">{document.pages} pages</p>
-              </div>
-              <div className="p-3 bg-slate-950 rounded border border-slate-800/80">
-                <p className="text-[10px] text-slate-500 flex items-center gap-1 uppercase mb-1">
-                  <Server className="w-3.5 h-3.5 text-teal-400" /> Partitions Created
-                </p>
-                <p className="text-teal-400 font-bold">{document.chunksCount} chunks</p>
-              </div>
-              <div className="p-3 bg-slate-950 rounded border border-slate-800/80">
-                <p className="text-[10px] text-slate-500 flex items-center gap-1 uppercase mb-1">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-teal-400" /> Index Host
-                </p>
-                <p className="text-slate-200 text-[11px] truncate">FAISS Local Matrix</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Extracted Text Preview with Page Nav */}
-          <div className="bg-slate-900 border border-slate-800 p-5 rounded-xl flex flex-col justify-between min-h-[350px]" id="extracted-text-preview-container">
-            <div>
-              <div className="flex items-center justify-between mb-4 border-b border-slate-800/80 pb-3">
-                <h3 className="text-[10px] font-bold tracking-widest text-slate-400 uppercase flex items-center gap-1.5 font-mono">
-                  <FileText className="w-4 h-4 text-teal-400" />
-                  Extracted OCR Text Preview
-                </h3>
-                
-                {/* Page Nav */}
-                <div className="flex items-center gap-2">
-                  <button 
-                    onClick={handlePrevPage}
-                    disabled={activePreviewPage === 1}
-                    className="p-1 rounded bg-slate-950 hover:bg-slate-800 text-slate-400 hover:text-teal-400 border border-slate-800 disabled:opacity-30 transition-all cursor-pointer"
-                    id="preview-prev-page"
-                  >
-                    <ChevronLeft className="w-3.5 h-3.5" />
-                  </button>
-                  <span className="text-[11px] font-mono text-slate-300">
-                    Page {activePreviewPage} of 3
-                  </span>
-                  <button 
-                    onClick={handleNextPage}
-                    disabled={activePreviewPage === 3}
-                    className="p-1 rounded bg-slate-950 hover:bg-slate-800 text-slate-400 hover:text-teal-400 border border-slate-800 disabled:opacity-30 transition-all cursor-pointer"
-                    id="preview-next-page"
-                  >
-                    <ChevronRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Text Area */}
-              <div className="p-4 bg-slate-950 rounded border border-slate-800/80 font-sans leading-relaxed text-xs text-slate-300 min-h-[180px] select-text">
-                {simulatedPagesText[activePreviewPage]}
-              </div>
-            </div>
-
-            <p className="text-[10px] text-slate-500 font-mono mt-4">
-              * Showing OCR preview of parsed blocks. High-resolution text extraction is completed via local PDFMiner parser.
-            </p>
-          </div>
-
-        </div>
-
-        {/* Right Side: Chunk Partitions (6 cols) */}
-        <div className="lg:col-span-6 space-y-4 flex flex-col h-full" id="chunks-partitions-panel">
-          
-          {/* Header & Chunk search */}
-          <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-[10px] font-bold tracking-widest text-slate-400 uppercase flex items-center gap-1.5 font-mono">
-                <Server className="w-4 h-4 text-teal-400" />
-                Vector Chunk Partitions ({documentChunks.length})
-              </h3>
-              <span className="text-[10px] bg-teal-400/10 text-teal-400 border border-teal-500/20 px-2 py-0.5 rounded font-mono uppercase font-bold">
-                768-D Indexed
-              </span>
-            </div>
-
-            {/* Chunk Search Bar */}
-            <div className="relative">
-              <Search className="absolute left-3 top-2.5 w-3.5 h-3.5 text-slate-500" />
-              <input
-                type="text"
-                placeholder="Search text in chunk partitions..."
-                className="w-full bg-slate-850 border border-slate-700 rounded-lg pl-8.5 pr-4 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-teal-500 font-semibold"
-                value={chunkSearch}
-                onChange={(e) => setChunkSearch(e.target.value)}
-                id="chunk-partition-search"
-              />
-            </div>
-          </div>
-
-          {/* Chunks List */}
-          <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
-            {filteredChunks.length === 0 ? (
-              <div className="text-center py-12 bg-slate-900 border border-slate-800 rounded-xl text-slate-500">
-                <p className="text-xs">No matching chunk partitions found</p>
-              </div>
-            ) : (
-              filteredChunks.map((chunk) => (
-                <div 
-                  key={chunk.id}
-                  className="p-4 bg-slate-900 border border-slate-800 rounded-xl space-y-2 hover:border-teal-500/40 transition-colors"
-                  id={`detail-chunk-card-${chunk.id}`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-mono text-teal-400 font-bold bg-teal-400/10 px-2 py-0.5 rounded border border-teal-500/20 uppercase tracking-wider">
-                      Chunk #{chunk.chunkNumber}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] text-slate-500 font-mono font-bold uppercase">
-                        Page {chunk.pageNumber}
-                      </span>
-                      <span className="inline-flex items-center gap-1 text-[9px] bg-teal-400/10 text-teal-400 px-2 py-0.5 rounded font-mono font-bold uppercase tracking-wider">
-                        <span className="w-1 h-1 bg-teal-400 rounded-full animate-ping" />
-                        Vector OK
-                      </span>
-                    </div>
-                  </div>
-
-                  <p className="text-[11px] text-slate-300 leading-relaxed italic bg-slate-950 p-2.5 rounded border border-slate-800/80">
-                    "{chunk.text}"
-                  </p>
-
-                  <div className="flex items-center justify-between text-[10px] text-slate-500 font-mono">
-                    <span>Token length: {chunk.tokenCount} tokens</span>
-                    <span>MD5: {chunk.id}</span>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-
-        </div>
-
-      </div>
-
+      <div className="lg:col-span-6 space-y-4"><div className="bg-slate-900 border border-slate-800 p-4 rounded-xl"><div className="flex justify-between"><h2 className="text-[10px] font-bold uppercase font-mono text-slate-400">Vector chunks ({chunks?.total ?? 0})</h2><span className="text-[10px] text-teal-400 font-mono">{detail.embedding.dimension}-D</span></div><label className="relative block mt-3"><Search className="absolute left-3 top-2.5 w-3.5 h-3.5 text-slate-500" /><input value={searchInput} onChange={event => setSearchInput(event.target.value)} placeholder="Search stored chunk text" className="w-full bg-slate-950 border border-slate-700 rounded-lg pl-9 pr-3 py-2 text-xs" /></label></div><div className="space-y-3 max-h-[610px] overflow-y-auto">{chunks?.items.length === 0 && <div className="p-8 text-center bg-slate-900 border border-slate-800 rounded-xl text-xs text-slate-500">No chunks match this search.</div>}{chunks?.items.map(chunk => <article key={chunk.id} className="p-4 bg-slate-900 border border-slate-800 rounded-xl"><div className="flex justify-between text-[10px] font-mono"><span className="text-teal-400">Chunk #{chunk.chunkIndex}</span><span>Page {chunk.pageNumber} · {chunk.status}</span></div><p className="mt-2 p-3 bg-slate-950 rounded text-[11px] leading-relaxed whitespace-pre-wrap">{chunk.text}</p><p className="mt-2 text-[10px] text-slate-500 font-mono">{chunk.tokenCount} tokens · ID {chunk.id}</p></article>)}</div>{chunks && chunks.totalPages > 1 && <div className="flex justify-center items-center gap-3 text-xs"><button disabled={chunkPage <= 1} onClick={() => setChunkPage(value => value - 1)} className="px-2 py-1 border border-slate-700 rounded disabled:opacity-30">Previous</button><span>{chunkPage} / {chunks.totalPages}</span><button disabled={chunkPage >= chunks.totalPages} onClick={() => setChunkPage(value => value + 1)} className="px-2 py-1 border border-slate-700 rounded disabled:opacity-30">Next</button></div>}</div>
     </div>
-  );
+  </div>;
 }
+
+const DatabaseIcon = Server;
+function Property({ icon: Icon, label, value }: { icon: typeof User; label: string; value: string }) { return <div className="p-3 bg-slate-950 rounded border border-slate-800 min-w-0"><p className="text-[9px] text-slate-500 uppercase flex gap-1"><Icon className="w-3 h-3 text-teal-400" />{label}</p><p className="text-slate-200 mt-1 truncate" title={value}>{value}</p></div>; }

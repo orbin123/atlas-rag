@@ -1,0 +1,52 @@
+{
+  "configuration": {
+    "created_at_utc": "2026-07-19T14:52:04.404931+00:00",
+    "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+    "embedding_dimension": 384,
+    "model_max_tokens": 256,
+    "embedding_text_field": "cleaned_text",
+    "normalized_embeddings": true,
+    "faiss_index_type": "IndexFlatIP",
+    "similarity_measure": "cosine_similarity",
+    "default_top_k": 5,
+    "retrieval_fetch_multiplier": 4,
+    "duplicate_similarity_threshold": 0.97,
+    "minimum_context_score": 0.3,
+    "chunk_count": 2729
+  },
+  "embedding": {
+    "chunk_count": 2729,
+    "document_count": 60,
+    "domain_count": 10,
+    "embedding_shape": [
+      2729,
+      384
+    ],
+    "embedding_dimension": 384,
+    "raw_norm_min": 0.9999998807907104,
+    "raw_norm_max": 1.0000001192092896,
+    "normalized_norm_min": 0.9999998807907104,
+    "normalized_norm_max": 1.0000001192092896,
+    "model_max_tokens": 256,
+    "chunks_above_model_limit": 2349,
+    "percent_chunks_above_model_limit": 86.08,
+    "model_load_seconds": 47.338468,
+    "embedding_seconds": 23.624635,
+    "milliseconds_per_chunk": 8.656883,
+    "index_build_seconds": 0.014165
+  },
+  "latency": {
+    "model_load_seconds": 47.338468,
+    "embedding_total_seconds": 23.624635,
+    "embedding_milliseconds_per_chunk": 8.656883,
+    "index_build_seconds": 0.014165,
+    "retrieval_test_count": 7,
+    "retrieval_mean_milliseconds": 325.997393,
+    "retrieval_median_milliseconds": 213.404041,
+    "retrieval_p95_milliseconds": 1083.994537,
+    "generation_test_count": 0,
+    "generation_mean_seconds": null
+  },
+  "retrieval_test_questions": 7,
+  "generation_examples": 0
+}

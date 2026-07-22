@@ -1,0 +1,15 @@
+{
+  "documents_discovered": 60,
+  "documents_processed": 60,
+  "domains": 10,
+  "extracted_pages": 1848,
+  "empty_pages_after_cleaning": 27,
+  "total_chunks": 2729,
+  "average_chunk_tokens": 472.81,
+  "largest_chunk_tokens": 700,
+  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+  "target_chunk_tokens": 550,
+  "maximum_chunk_tokens": 700,
+  "overlap_tokens": 90,
+  "extraction_errors": []
+}

@@ -1,0 +1,15 @@
+{
+  "created_at_utc": "2026-07-19T14:52:04.404931+00:00",
+  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+  "embedding_dimension": 384,
+  "model_max_tokens": 256,
+  "embedding_text_field": "cleaned_text",
+  "normalized_embeddings": true,
+  "faiss_index_type": "IndexFlatIP",
+  "similarity_measure": "cosine_similarity",
+  "default_top_k": 5,
+  "retrieval_fetch_multiplier": 4,
+  "duplicate_similarity_threshold": 0.97,
+  "minimum_context_score": 0.3,
+  "chunk_count": 2729
+}

@@ -1,0 +1,21 @@
+{
+  "chunk_count": 2729,
+  "document_count": 60,
+  "domain_count": 10,
+  "embedding_shape": [
+    2729,
+    384
+  ],
+  "embedding_dimension": 384,
+  "raw_norm_min": 0.9999998807907104,
+  "raw_norm_max": 1.0000001192092896,
+  "normalized_norm_min": 0.9999998807907104,
+  "normalized_norm_max": 1.0000001192092896,
+  "model_max_tokens": 256,
+  "chunks_above_model_limit": 2349,
+  "percent_chunks_above_model_limit": 86.08,
+  "model_load_seconds": 47.338468,
+  "embedding_seconds": 23.624635,
+  "milliseconds_per_chunk": 8.656883,
+  "index_build_seconds": 0.014165
+}

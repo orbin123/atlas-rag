@@ -1,0 +1,12 @@
+{
+  "model_load_seconds": 47.338468,
+  "embedding_total_seconds": 23.624635,
+  "embedding_milliseconds_per_chunk": 8.656883,
+  "index_build_seconds": 0.014165,
+  "retrieval_test_count": 7,
+  "retrieval_mean_milliseconds": 325.997393,
+  "retrieval_median_milliseconds": 213.404041,
+  "retrieval_p95_milliseconds": 1083.994537,
+  "generation_test_count": 0,
+  "generation_mean_seconds": null
+}

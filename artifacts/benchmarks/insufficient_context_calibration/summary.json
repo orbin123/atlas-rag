@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "calibrated_at_utc": "2026-07-20T13:47:49.880776+00:00",
+  "status": "accepted_with_limited_negative_sample",
+  "classification_rule": {
+    "generation_eligible": "top_score >= threshold",
+    "insufficient_context": "top_score < threshold",
+    "score": "cosine-equivalent inner product of L2-normalized MiniLM vectors"
+  },
+  "selection_objective": [
+    "refuse every known unsupported question",
+    "retain the maximum number of known answerable questions",
+    "when the classes are separated, choose the rounded midpoint of the empirical gap"
+  ],
+  "selection": {
+    "threshold": 0.46,
+    "raw_gap_midpoint": 0.45976950228214264,
+    "maximum_unsupported_score": 0.44383394718170166,
+    "minimum_answerable_score": 0.4757050573825836,
+    "observed_separation_gap": 0.03187111020088196,
+    "margin_above_maximum_unsupported": 0.01616605281829836,
+    "margin_below_minimum_answerable": 0.015705057382583598,
+    "rounding": "two decimals when the rounded midpoint remains inside the zero-error gap"
+  },
+  "selected_metrics": {
+    "threshold": 0.46,
+    "true_positive_answerable_eligible": 30,
+    "false_negative_answerable_refused": 0,
+    "true_negative_unsupported_refused": 3,
+    "false_positive_unsupported_eligible": 0,
+    "answerable_retention": 1.0,
+    "unsupported_refusal_recall": 1.0,
+    "unsupported_false_acceptance_rate": 0.0,
+    "eligible_precision": 1.0,
+    "balanced_accuracy": 1.0
+  },
+  "reference_comparisons": {
+    "0.30": {
+      "threshold": 0.3,
+      "true_positive_answerable_eligible": 30,
+      "false_negative_answerable_refused": 0,
+      "true_negative_unsupported_refused": 1,
+      "false_positive_unsupported_eligible": 2,
+      "answerable_retention": 1.0,
+      "unsupported_refusal_recall": 0.3333333333333333,
+      "unsupported_false_acceptance_rate": 0.6666666666666666,
+      "eligible_precision": 0.9375,
+      "balanced_accuracy": 0.6666666666666666
+    },
+    "0.72": {
+      "threshold": 0.72,
+      "true_positive_answerable_eligible": 8,
+      "false_negative_answerable_refused": 22,
+      "true_negative_unsupported_refused": 3,
+      "false_positive_unsupported_eligible": 0,
+      "answerable_retention": 0.26666666666666666,
+      "unsupported_refusal_recall": 1.0,
+      "unsupported_false_acceptance_rate": 0.0,
+      "eligible_precision": 1.0,
+      "balanced_accuracy": 0.6333333333333333
+    },
+    "0.46": {
+      "threshold": 0.46,
+      "true_positive_answerable_eligible": 30,
+      "false_negative_answerable_refused": 0,
+      "true_negative_unsupported_refused": 3,
+      "false_positive_unsupported_eligible": 0,
+      "answerable_retention": 1.0,
+      "unsupported_refusal_recall": 1.0,
+      "unsupported_false_acceptance_rate": 0.0,
+      "eligible_precision": 1.0,
+      "balanced_accuracy": 1.0
+    }
+  },
+  "score_distributions": {
+    "answerable": {
+      "minimum": 0.4757050573825836,
+      "p25": 0.5926739573478699,
+      "median": 0.6391012668609619,
+      "p75": 0.7228109836578369,
+      "maximum": 0.797507107257843,
+      "mean": 0.6503331293662389
+    },
+    "unsupported": {
+      "minimum": 0.272860586643219,
+      "p25": 0.272860586643219,
+      "median": 0.3754652738571167,
+      "p75": 0.44383394718170166,
+      "maximum": 0.44383394718170166,
+      "mean": 0.36405326922734577
+    }
+  },
+  "dataset": {
+    "retrieval_results_path": "artifacts/benchmarks/embedding_context/retrieval_results.jsonl",
+    "retrieval_results_sha256": "3e06c1e382bc7cae9ffc723e8cb95f8546ed334f5b1ea0aeb710d5c6f6083c18",
+    "gold_path": "artifacts/evaluation/gold_questions.jsonl",
+    "gold_sha256": "691f3f42d7a016ee2ec4401933faedd572a942cb7ca51d1ade45ded4d846ddd4",
+    "selected_config_path": "artifacts/benchmarks/embedding_context/selected_config.json",
+    "selected_config_sha256": "28baa7025488c2ffdfad77efb1aa416b1ff7c9539f7e0c38ff4f84656b659999",
+    "config_key": "minilm",
+    "questions": 33,
+    "answerable_questions": 30,
+    "unsupported_questions": 3
+  },
+  "limitations": [
+    "Only three unsupported questions are available, so zero observed false acceptance is not a generalization guarantee.",
+    "The threshold is coupled to this corpus, gold dataset, embedding/chunk schema, and top-score gate.",
+    "Top-score eligibility does not prove that every retrieved source is relevant or that a generated answer is correct."
+  ],
+  "recalibration_triggers": [
+    "gold dataset or corpus content changes",
+    "embedding model, revision, prefixes, normalization, or chunking changes",
+    "retrieval deduplication or score computation changes"
+  ]
+}

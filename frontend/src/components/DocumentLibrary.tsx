@@ -1,287 +1,71 @@
-import React, { useState } from 'react';
-import { 
-  Search, 
-  Trash2, 
-  FileText, 
-  Eye, 
-  Plus, 
-  Folder, 
-  Calendar, 
-  Layers, 
-  Server, 
-  BookOpen, 
-  CheckCircle, 
-  AlertTriangle,
-  ExternalLink
-} from 'lucide-react';
-import { Document } from '../types';
+import { useEffect, useMemo, useState } from 'react';
+import type { LucideIcon } from 'lucide-react';
+import { BookOpen, Calendar, CheckCircle, Eye, FileText, Folder, Layers, Plus, Search, Server, Trash2 } from 'lucide-react';
+import { deleteDocument } from '../api/documents';
+import { ErrorNotice, LoadingNotice } from './AsyncNotice';
+import { useIngestionJob } from '../hooks/useIngestionJob';
+import type { DocumentStats, DocumentSummary } from '../types';
+import { formatBytes, isTerminalJob } from '../types';
 
-interface DocumentLibraryProps {
-  documents: Document[];
-  onDeleteDocument: (docId: string) => void;
-  onSelectDocument: (docId: string) => void;
+interface Props {
+  documents: DocumentSummary[];
+  stats: DocumentStats | null;
+  loading: boolean;
+  error: string | null;
+  onReload: () => Promise<void>;
+  onSelectDocument: (id: string) => void;
   onNavigateToUpload: () => void;
 }
 
-export default function DocumentLibrary({ 
-  documents, 
-  onDeleteDocument, 
-  onSelectDocument, 
-  onNavigateToUpload 
-}: DocumentLibraryProps) {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedDomain, setSelectedDomain] = useState<string>('All');
+export default function DocumentLibrary({ documents, stats, loading, error, onReload, onSelectDocument, onNavigateToUpload }: Props) {
+  const [search, setSearch] = useState('');
+  const [domain, setDomain] = useState('All');
+  const [deleteJobId, setDeleteJobId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const { job: deleteJob, error: jobError } = useIngestionJob(deleteJobId);
 
-  // Extract unique domains
-  const domains = ['All', ...Array.from(new Set(documents.map(doc => doc.domain)))];
+  useEffect(() => {
+    if (deleteJob && isTerminalJob(deleteJob.status) && deleteJobId) {
+      setDeleteJobId(null); setDeletingId(null);
+      if (deleteJob.status === 'succeeded') void onReload();
+      else setActionError(deleteJob.error?.message || `Deletion ended with status ${deleteJob.status}.`);
+    }
+  }, [deleteJob, deleteJobId, onReload]);
 
-  // Filters
-  const filteredDocs = documents.filter(doc => {
-    const matchesSearch = doc.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          (doc.description && doc.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                          (doc.author && doc.author.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesDomain = selectedDomain === 'All' || doc.domain === selectedDomain;
-    return matchesSearch && matchesDomain;
-  });
+  const domains = ['All', ...Array.from(new Set(documents.map(item => item.domain))).sort()];
+  const filtered = useMemo(() => documents.filter(item => {
+    const term = search.trim().toLowerCase();
+    return (domain === 'All' || item.domain === domain) && (!term || [item.name, item.description || '', item.author || ''].some(value => value.toLowerCase().includes(term)));
+  }), [documents, search, domain]);
+  const statCards: [string, number, string, LucideIcon][] = [
+    ['Total Corpus', stats?.totalDocuments ?? 0, 'Documents', FileText],
+    ['Parsed Pages', stats?.totalPages ?? 0, 'Stored page records', Layers],
+    ['FAISS Vectors', stats?.indexHealth.vectorCount ?? 0, stats?.indexHealth.status || 'unknown', Server],
+    ['Indexed', stats?.indexedDocuments ?? 0, `${stats?.processingDocuments ?? 0} processing · ${stats?.failedDocuments ?? 0} failed`, CheckCircle],
+  ];
 
-  // Calculation parameters for stats overview
-  const totalPages = documents.reduce((sum, doc) => sum + doc.pages, 0);
-  const totalChunks = documents.reduce((sum, doc) => sum + doc.chunksCount, 0);
-  const successfulIndexes = documents.filter(doc => doc.status === 'indexed').length;
+  const remove = async (document: DocumentSummary) => {
+    if (!window.confirm(`Delete ${document.name} from the corpus and vector index?`)) return;
+    setActionError(null); setDeletingId(document.id);
+    try { const accepted = await deleteDocument(document.id); setDeleteJobId(accepted.jobId); }
+    catch (cause) { setDeletingId(null); setActionError(cause instanceof Error ? cause.message : 'Deletion could not be started.'); }
+  };
 
-  return (
-    <div className="space-y-6 animate-fade-in" id="document-library-page">
-      
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-100 font-display flex items-center gap-2">
-            <BookOpen className="w-6 h-6 text-teal-400" />
-            Document Library
-          </h1>
-          <p className="text-xs text-slate-400">
-            Inspect, search, and manage source documents ingested into the local vector database.
-          </p>
-        </div>
-        <button
-          onClick={onNavigateToUpload}
-          className="flex items-center justify-center gap-2 bg-teal-500 hover:bg-teal-400 text-slate-950 text-xs font-bold py-2.5 px-4 rounded-lg transition-all uppercase tracking-wider"
-          id="lib-add-doc-btn"
-        >
-          <Plus className="w-4 h-4 stroke-[2.5]" />
-          Ingest New Document
-        </button>
-      </div>
-
-      {/* Bento-grid Statistics Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4" id="library-stats-bento">
-        {/* Total Documents Card */}
-        <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl relative overflow-hidden group hover:border-slate-700 transition-all">
-          <div className="absolute top-0 right-0 p-3 opacity-10">
-            <FileText className="w-12 h-12 text-teal-400" />
-          </div>
-          <p className="text-[10px] uppercase font-mono tracking-widest font-bold text-slate-500">Total Corpus</p>
-          <p className="text-2xl font-bold text-slate-200 mt-1 font-display">{documents.length}</p>
-          <p className="text-[10px] text-slate-400 mt-1">Multi-domain documents</p>
-        </div>
-
-        {/* Total Pages Card */}
-        <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl relative overflow-hidden group hover:border-slate-700 transition-all">
-          <div className="absolute top-0 right-0 p-3 opacity-10">
-            <Layers className="w-12 h-12 text-teal-400" />
-          </div>
-          <p className="text-[10px] uppercase font-mono tracking-widest font-bold text-slate-500">Total Page Count</p>
-          <p className="text-2xl font-bold text-slate-200 mt-1 font-display">{totalPages}</p>
-          <p className="text-[10px] text-slate-400 mt-1">Fully parsed pages</p>
-        </div>
-
-        {/* Total Chunk Partitions */}
-        <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl relative overflow-hidden group hover:border-slate-700 transition-all">
-          <div className="absolute top-0 right-0 p-3 opacity-10">
-            <Server className="w-12 h-12 text-teal-400" />
-          </div>
-          <p className="text-[10px] uppercase font-mono tracking-widest font-bold text-slate-500">FAISS Index Nodes</p>
-          <p className="text-2xl font-bold text-slate-200 mt-1 font-display">{totalChunks}</p>
-          <p className="text-[10px] text-slate-400 mt-1">Text chunk embeddings</p>
-        </div>
-
-        {/* Active Indexes Card */}
-        <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl relative overflow-hidden group hover:border-slate-700 transition-all">
-          <div className="absolute top-0 right-0 p-3 opacity-10">
-            <CheckCircle className="w-12 h-12 text-teal-400" />
-          </div>
-          <p className="text-[10px] uppercase font-mono tracking-widest font-bold text-slate-500">Healthy Vector Indexes</p>
-          <p className="text-2xl font-bold text-teal-400 mt-1 font-display">
-            {Math.round((successfulIndexes / (documents.length || 1)) * 100)}%
-          </p>
-          <p className="text-[10px] text-slate-400 mt-1">{successfulIndexes} healthy partitions</p>
-        </div>
-      </div>
-
-      {/* Filtering Control Block */}
-      <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl flex flex-col md:flex-row gap-4 justify-between items-center" id="library-filters-bar">
-        {/* Search */}
-        <div className="relative w-full md:max-w-md">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
-          <input
-            type="text"
-            placeholder="Search documents by name, description, author..."
-            className="w-full bg-slate-850 border border-slate-700 rounded-lg pl-10 pr-4 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            id="lib-search-input"
-          />
-        </div>
-
-        {/* Domain Selection Tabs */}
-        <div className="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto pb-1 md:pb-0 scrollbar-none justify-start md:justify-end">
-          <span className="text-[11px] font-mono font-bold text-slate-500 hidden sm:inline mr-1 uppercase">Domain:</span>
-          {domains.map((dom) => (
-            <button
-              key={dom}
-              onClick={() => setSelectedDomain(dom)}
-              className={`text-[10px] uppercase font-bold tracking-wider whitespace-nowrap px-3 py-1.5 rounded transition-all duration-200 ${
-                selectedDomain === dom 
-                  ? 'bg-slate-850 text-teal-400 font-bold border border-teal-500/40' 
-                  : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
-              }`}
-              id={`lib-filter-domain-${dom.replace(/\s+/g, '-').toLowerCase()}`}
-            >
-              {dom}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Main Table view */}
-      <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden" id="library-table-container">
-        {filteredDocs.length === 0 ? (
-          <div className="text-center py-16 text-slate-500">
-            <FileText className="w-12 h-12 mx-auto mb-3 opacity-30 text-slate-400" />
-            <p className="text-sm font-semibold">No indexed documents found</p>
-            <p className="text-xs text-slate-500 mt-1 max-w-[280px] mx-auto">
-              Try adjusting your query or upload a new file to index it into Atlas.
-            </p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-950 border-b border-slate-800 text-[10px] uppercase font-mono tracking-widest font-bold text-slate-500">
-                  <th className="p-4 pl-6">Document Name</th>
-                  <th className="p-4">Domain Context</th>
-                  <th className="p-4">Pages / Chunks</th>
-                  <th className="p-4">Upload Date</th>
-                  <th className="p-4">File Size</th>
-                  <th className="p-4">Index Status</th>
-                  <th className="p-4 pr-6 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/60">
-                {filteredDocs.map((doc) => (
-                  <tr 
-                    key={doc.id}
-                    className="hover:bg-slate-800/30 transition-colors group"
-                    id={`lib-row-doc-${doc.id}`}
-                  >
-                    {/* Name */}
-                    <td className="p-4 pl-6">
-                      <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded shrink-0 ${
-                          doc.type === 'pdf' ? 'bg-red-500/10 text-red-400' :
-                          doc.type === 'docx' ? 'bg-blue-500/10 text-blue-400' :
-                          'bg-emerald-500/10 text-emerald-400'
-                        }`}>
-                          <FileText className="w-4 h-4" />
-                        </div>
-                        <div className="min-w-0 max-w-[200px] sm:max-w-[300px]">
-                          <p 
-                            className="text-xs font-semibold text-slate-200 group-hover:text-teal-400 truncate cursor-pointer transition-colors"
-                            onClick={() => onSelectDocument(doc.id)}
-                            title="Click to view details"
-                          >
-                            {doc.name}
-                          </p>
-                          <p className="text-[10px] text-slate-500 truncate mt-0.5">{doc.description}</p>
-                        </div>
-                      </div>
-                    </td>
-
-                    {/* Domain */}
-                    <td className="p-4">
-                      <span className="inline-flex items-center gap-1 text-[11px] bg-slate-850 border border-slate-700 text-slate-300 px-2 py-0.5 rounded font-mono">
-                        <Folder className="w-3 h-3 text-teal-400" />
-                        {doc.domain}
-                      </span>
-                    </td>
-
-                    {/* Pages & Chunks */}
-                    <td className="p-4">
-                      <div className="text-[11px] font-mono text-slate-300">
-                        <span>{doc.pages} pages</span>
-                        <span className="mx-1 text-slate-600">/</span>
-                        <span className="text-teal-400 font-bold">{doc.chunksCount} chunks</span>
-                      </div>
-                    </td>
-
-                    {/* Upload Date */}
-                    <td className="p-4">
-                      <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-mono">
-                        <Calendar className="w-3 h-3" />
-                        {doc.uploadDate}
-                      </div>
-                    </td>
-
-                    {/* File Size */}
-                    <td className="p-4 text-[11px] text-slate-400 font-mono">
-                      {doc.fileSize}
-                    </td>
-
-                    {/* Status */}
-                    <td className="p-4">
-                      <span className={`inline-flex items-center gap-1.5 text-[10px] px-2.5 py-0.5 rounded font-mono font-bold uppercase tracking-wider ${
-                        doc.status === 'indexed' ? 'bg-teal-400/10 text-teal-400 border border-teal-500/20' :
-                        doc.status === 'processing' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
-                        'bg-red-500/10 text-red-400 border border-red-500/20'
-                      }`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${
-                          doc.status === 'indexed' ? 'bg-teal-400' :
-                          doc.status === 'processing' ? 'bg-amber-400 animate-pulse' :
-                          'bg-red-400'
-                        }`} />
-                        {doc.status}
-                      </span>
-                    </td>
-
-                    {/* Actions */}
-                    <td className="p-4 pr-6 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => onSelectDocument(doc.id)}
-                          className="p-1.5 rounded bg-slate-800 border border-slate-700 text-slate-300 hover:text-teal-400 hover:border-teal-500/40 transition-colors"
-                          title="Inspect Document Details"
-                          id={`lib-inspect-${doc.id}`}
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => onDeleteDocument(doc.id)}
-                          className="p-1.5 rounded bg-slate-800 border border-slate-700 text-slate-300 hover:text-red-400 hover:border-red-500/30 transition-colors"
-                          title="Delete index from corpus"
-                          id={`lib-delete-${doc.id}`}
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
+  return <div className="space-y-6 animate-fade-in" id="document-library-page">
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"><div><h1 className="text-2xl font-bold text-slate-100 flex items-center gap-2"><BookOpen className="w-6 h-6 text-teal-400" />Document Library</h1><p className="text-xs text-slate-400">Real documents and index state from the Atlas API.</p></div><button onClick={onNavigateToUpload} className="flex items-center justify-center gap-2 bg-teal-500 hover:bg-teal-400 text-slate-950 text-xs font-bold py-2.5 px-4 rounded-lg uppercase"><Plus className="w-4 h-4" />Ingest New Document</button></div>
+    {error && <ErrorNotice message={error} retry={() => void onReload()} />}
+    {(actionError || jobError) && <ErrorNotice message={actionError || jobError || ''} />}
+    {deleteJob && !isTerminalJob(deleteJob.status) && <div className="p-3 border border-amber-500/30 bg-amber-950/20 rounded-lg text-xs text-amber-200">Deleting document: {deleteJob.stageMessage || deleteJob.stage || deleteJob.status} ({deleteJob.progressPercent}%)</div>}
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {statCards.map(([label, value, note, Icon]) => <div key={label} className="bg-slate-900 border border-slate-800 p-4 rounded-xl"><Icon className="w-5 h-5 text-teal-400 mb-2" /><p className="text-[10px] uppercase font-mono tracking-widest text-slate-500">{label}</p><p className="text-2xl font-bold text-slate-200">{value.toLocaleString()}</p><p className="text-[10px] text-slate-400">{note}</p></div>)}
     </div>
-  );
+    <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl flex flex-col md:flex-row gap-3 justify-between">
+      <label className="relative flex-1 max-w-md"><Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" /><input value={search} onChange={event => setSearch(event.target.value)} placeholder="Search name, description, or author" className="w-full bg-slate-950 border border-slate-700 rounded-lg pl-10 pr-4 py-2 text-xs" /></label>
+      <select value={domain} onChange={event => setDomain(event.target.value)} className="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs">{domains.map(value => <option key={value}>{value}</option>)}</select>
+    </div>
+    {loading ? <LoadingNotice label="Loading document library…" /> : <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
+      {filtered.length === 0 ? <div className="py-16 text-center text-sm text-slate-500">No documents match the current filters.</div> : <div className="overflow-x-auto"><table className="w-full text-left"><thead><tr className="bg-slate-950 text-[10px] uppercase font-mono text-slate-500"><th className="p-4">Document</th><th className="p-4">Domain</th><th className="p-4">Pages / Chunks</th><th className="p-4">Indexed</th><th className="p-4">Size</th><th className="p-4">Status</th><th className="p-4 text-right">Actions</th></tr></thead><tbody className="divide-y divide-slate-800">{filtered.map(item => <tr key={item.id} className="hover:bg-slate-800/30"><td className="p-4"><button onClick={() => onSelectDocument(item.id)} className="text-left"><span className="text-xs font-semibold text-slate-200 hover:text-teal-400 flex items-center gap-2"><FileText className="w-4 h-4" />{item.name}</span><span className="block text-[10px] text-slate-500 max-w-xs truncate">{item.description || item.mimeType}</span></button></td><td className="p-4 text-xs"><span className="flex gap-1"><Folder className="w-3 h-3 text-teal-400" />{item.domain}</span></td><td className="p-4 text-xs font-mono">{item.pageCount} / <span className="text-teal-400">{item.chunkCount}</span></td><td className="p-4 text-xs text-slate-400"><span className="flex gap-1"><Calendar className="w-3 h-3" />{item.indexedAt ? new Date(item.indexedAt).toLocaleDateString() : '—'}</span></td><td className="p-4 text-xs font-mono">{formatBytes(item.sizeBytes)}</td><td className="p-4"><span className={`text-[10px] uppercase font-mono ${item.status === 'indexed' ? 'text-teal-400' : item.status === 'failed' ? 'text-red-400' : 'text-amber-400'}`}>{item.status}</span></td><td className="p-4"><div className="flex justify-end gap-2"><button onClick={() => onSelectDocument(item.id)} title="Inspect" className="p-1.5 rounded border border-slate-700"><Eye className="w-3.5 h-3.5" /></button><button disabled={deletingId !== null} onClick={() => void remove(item)} title="Delete" className="p-1.5 rounded border border-slate-700 hover:text-red-400 disabled:opacity-40"><Trash2 className="w-3.5 h-3.5" /></button></div></td></tr>)}</tbody></table></div>}
+    </div>}
+  </div>;
 }

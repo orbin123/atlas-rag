@@ -1,319 +1,35 @@
-import React, { useState } from 'react';
-import { 
-  BarChart4, 
-  TrendingUp, 
-  TrendingDown, 
-  AlertOctagon, 
-  Target, 
-  ShieldCheck, 
-  HelpCircle,
-  FileCheck2,
-  GitBranch,
-  Search,
-  CheckCircle2,
-  XOctagon
-} from 'lucide-react';
-import { INITIAL_METRICS, DOMAIN_PERFORMANCE, FAILURE_ANALYSIS_DATA } from '../data';
+import { useMemo, useState } from 'react';
+import { AlertOctagon, BarChart4, CheckCircle2, Clock, GitBranch, Play, Search, ShieldCheck, Target } from 'lucide-react';
+import { useEvaluation } from '../hooks/useEvaluation';
+import type { EvaluationDomain, SystemInfo } from '../types';
+import { formatPercent } from '../types';
+import { ErrorNotice, LoadingNotice } from './AsyncNotice';
 
-export default function Evaluation() {
-  const [activeMetricTab, setActiveMetricTab] = useState<'correctness' | 'groundedness' | 'recall'>('correctness');
-  const [searchQuery, setSearchQuery] = useState('');
+type Metric = 'recallAt5' | 'mrr' | 'fallbackAccuracy' | 'citationRate';
+export default function Evaluation({ system }: { system: SystemInfo | null }) {
+  const evaluation = useEvaluation();
+  const [metric, setMetric] = useState<Metric>('recallAt5');
+  const [search, setSearch] = useState('');
+  const failures = useMemo(() => (evaluation.latest?.failures || []).filter(item => [item.question, item.category, item.expectedDocumentName || '', item.retrievedDocumentName || ''].some(value => value.toLowerCase().includes(search.toLowerCase()))), [evaluation.latest, search]);
+  const run = evaluation.latest?.run;
 
-  // Filter failure analysis logs
-  const filteredFailures = FAILURE_ANALYSIS_DATA.filter(fail => 
-    fail.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    fail.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    fail.expectedSource.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  return (
-    <div className="space-y-6 animate-fade-in" id="evaluation-analytics-page">
-      
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-100 font-display flex items-center gap-2">
-          <BarChart4 className="w-6 h-6 text-teal-400" />
-          RAG Performance Evaluation
-        </h1>
-        <p className="text-xs text-slate-400">
-          Continuous validation suite tracking information retrieval coverage, semantic precision, and grounding quality.
-        </p>
-      </div>
-
-      {/* RAG KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="eval-kpi-grid">
-        {INITIAL_METRICS.map((metric, idx) => {
-          // Choose icon based on metric name
-          let MetricIcon = Target;
-          if (metric.name.includes('MRR')) MetricIcon = GitBranch;
-          if (metric.name.includes('Correctness')) MetricIcon = FileCheck2;
-          if (metric.name.includes('Groundedness')) MetricIcon = ShieldCheck;
-
-          const isImprovement = metric.changeType === 'increase';
-
-          return (
-            <div 
-              key={idx}
-              className="bg-slate-900 border border-slate-800 p-4 rounded-xl relative overflow-hidden flex flex-col justify-between"
-              id={`eval-kpi-card-${idx}`}
-            >
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] uppercase font-mono tracking-widest font-bold text-slate-500 truncate max-w-[120px]">
-                    {metric.name.split(' (')[0]}
-                  </span>
-                  <div className="p-1.5 rounded bg-slate-950 text-teal-400 border border-slate-850">
-                    <MetricIcon className="w-3.5 h-3.5" />
-                  </div>
-                </div>
-                
-                <h3 className="text-2xl font-bold text-slate-100 font-display mt-1">
-                  {metric.value}
-                </h3>
-              </div>
-
-              <div className="mt-4 flex items-center justify-between">
-                <span className={`text-[10px] px-1.5 py-0.5 rounded flex items-center gap-0.5 font-mono font-bold ${
-                  isImprovement ? 'bg-teal-400/10 text-teal-400 border border-teal-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'
-                }`}>
-                  {isImprovement ? <TrendingUp className="w-2.5 h-2.5" /> : <TrendingDown className="w-2.5 h-2.5" />}
-                  {metric.change}
-                </span>
-                <span className="text-[9px] text-slate-500 font-mono font-bold uppercase">Vs last run</span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Domain Performance comparison chart */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
-        {/* Chart (7 cols) */}
-        <div className="lg:col-span-8 bg-slate-900 border border-slate-800 p-5 rounded-xl flex flex-col justify-between" id="eval-chart-box">
-          <div>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6 border-b border-slate-800 pb-3">
-              <div>
-                <h3 className="text-xs font-bold tracking-widest text-slate-400 uppercase flex items-center gap-1.5 font-mono">
-                  <BarChart4 className="w-4 h-4 text-teal-400" />
-                  Index Domain Quality Metrics
-                </h3>
-                <p className="text-[10px] text-slate-400">Comparing retriever & generation compliance across active document namespaces.</p>
-              </div>
-
-              {/* Chart Filter tabs */}
-              <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-lg border border-slate-850">
-                <button
-                  onClick={() => setActiveMetricTab('correctness')}
-                  className={`text-[10px] uppercase tracking-wider px-2.5 py-1 rounded font-mono font-bold transition-all ${
-                    activeMetricTab === 'correctness' ? 'bg-slate-800 text-teal-400 border border-teal-500/30' : 'text-slate-500 hover:text-slate-300'
-                  }`}
-                  id="tab-chart-correctness"
-                >
-                  Correctness
-                </button>
-                <button
-                  onClick={() => setActiveMetricTab('groundedness')}
-                  className={`text-[10px] uppercase tracking-wider px-2.5 py-1 rounded font-mono font-bold transition-all ${
-                    activeMetricTab === 'groundedness' ? 'bg-slate-800 text-teal-400 border border-teal-500/30' : 'text-slate-500 hover:text-slate-300'
-                  }`}
-                  id="tab-chart-groundedness"
-                >
-                  Groundedness
-                </button>
-                <button
-                  onClick={() => setActiveMetricTab('recall')}
-                  className={`text-[10px] uppercase tracking-wider px-2.5 py-1 rounded font-mono font-bold transition-all ${
-                    activeMetricTab === 'recall' ? 'bg-slate-800 text-teal-400 border border-teal-500/30' : 'text-slate-500 hover:text-slate-300'
-                  }`}
-                  id="tab-chart-recall"
-                >
-                  Recall@5
-                </button>
-              </div>
-            </div>
-
-            {/* Custom Responsive Horizontal Bar Chart */}
-            <div className="space-y-5" id="custom-responsive-bar-chart">
-              {DOMAIN_PERFORMANCE.map((item, index) => {
-                // Determine current active metric value and color theme
-                const val = activeMetricTab === 'correctness' ? item.correctness :
-                            activeMetricTab === 'groundedness' ? item.groundedness : item.recall;
-                
-                const barColor = activeMetricTab === 'correctness' ? 'bg-teal-500' :
-                                 activeMetricTab === 'groundedness' ? 'bg-teal-400' : 'bg-teal-600';
-
-                return (
-                  <div key={index} className="space-y-1.5" id={`chart-row-${index}`}>
-                    <div className="flex justify-between items-center text-xs font-mono">
-                      <span className="text-slate-300 font-bold uppercase">{item.domain}</span>
-                      <span className="text-white font-extrabold">{val}%</span>
-                    </div>
-                    
-                    <div className="flex items-center gap-3">
-                      {/* Bar Background */}
-                      <div className="w-full h-4 bg-slate-950 rounded border border-slate-850 overflow-hidden relative group">
-                        {/* Dynamic Bar Fill */}
-                        <div 
-                          className={`h-full ${barColor} shadow-inner rounded-full transition-all duration-500`}
-                          style={{ width: `${val}%` }}
-                        />
-                      </div>
-                      
-                      {/* Sub-KPI detail list */}
-                      <span className="text-[10px] font-mono font-bold text-slate-500 shrink-0 w-14 text-right uppercase">
-                        MRR: {item.mrr}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between text-[10px] text-slate-500 font-mono font-bold uppercase">
-            <span>Validation frequency: Daily automatic cron</span>
-            <span>Total testing cases: 480 queries</span>
-          </div>
-        </div>
-
-        {/* Failure Explanation side-panel (5 cols) */}
-        <div className="lg:col-span-4 bg-slate-900 border border-slate-800 p-5 rounded-xl flex flex-col justify-between" id="eval-failures-panel">
-          <div>
-            <h3 className="text-[10px] font-bold tracking-widest text-slate-400 uppercase flex items-center gap-1.5 font-mono mb-2">
-              <AlertOctagon className="w-4 h-4 text-red-400" />
-              RAG Guardrail Explanations
-            </h3>
-            <p className="text-[11px] text-slate-400 mb-4">
-              Atlas employs a multi-tiered defense sequence to identify failures and handle anomalies:
-            </p>
-
-            <div className="space-y-4 text-xs font-sans">
-              <div className="p-3 bg-red-950/20 border border-red-500/20 rounded-lg">
-                <p className="font-bold font-mono text-[10px] uppercase tracking-wide text-red-400 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-                  Anti-Hallucination Safe Halt
-                </p>
-                <p className="text-[10px] text-slate-400 mt-1">
-                  If cosine similarity is lower than <span className="font-mono font-bold text-slate-300">0.72</span>, generation is immediately aborted, rendering the "Insufficient Context" message.
-                </p>
-              </div>
-
-              <div className="p-3 bg-slate-950 border border-slate-850 rounded-lg">
-                <p className="font-bold font-mono text-[10px] uppercase tracking-wide text-slate-300 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-teal-400" />
-                  Mean Reciprocal Rank (MRR)
-                </p>
-                <p className="text-[10px] text-slate-400 mt-1">
-                  Assesses how high up the list the first correct source occurs. Ensures users read correct references first.
-                </p>
-              </div>
-
-              <div className="p-3 bg-slate-950 border border-slate-850 rounded-lg">
-                <p className="font-bold font-mono text-[10px] uppercase tracking-wide text-slate-300 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-teal-400" />
-                  Groundedness Checking
-                </p>
-                <p className="text-[10px] text-slate-400 mt-1">
-                  A verification step comparison mapping generated text sentences against source text coordinates.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <p className="text-[10px] text-slate-500 font-mono font-bold uppercase mt-4">
-            Validation host runs locally via synthetic query generation against indexed corpus vectors.
-          </p>
-        </div>
-
-      </div>
-
-      {/* Failure Analysis Table */}
-      <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden" id="eval-failures-table">
-        <div className="p-4 border-b border-slate-800 bg-slate-950 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h3 className="text-[10px] font-bold tracking-widest text-slate-400 uppercase flex items-center gap-1.5 font-mono">
-              <AlertOctagon className="w-4 h-4 text-red-400" />
-              Failure Analysis Logs
-            </h3>
-            <p className="text-[10px] text-slate-400 mt-0.5">Auditing queries where grounding validation flag generated errors.</p>
-          </div>
-
-          {/* Table Search */}
-          <div className="relative">
-            <Search className="absolute left-3 top-2.5 w-3.5 h-3.5 text-slate-500" />
-            <input
-              type="text"
-              placeholder="Search failures by keyword..."
-              className="bg-slate-850 border border-slate-700 rounded-lg pl-8.5 pr-4 py-1 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-teal-500 font-semibold"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              id="failure-analysis-search"
-            />
-          </div>
-        </div>
-
-        {filteredFailures.length === 0 ? (
-          <div className="text-center py-10 text-slate-500">
-            <CheckCircle2 className="w-10 h-10 mx-auto mb-2 text-teal-400 opacity-60" />
-            <p className="text-xs font-bold uppercase tracking-wide">No active failures match search parameters.</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-950 border-b border-slate-800 text-[10px] uppercase font-mono tracking-widest font-bold text-slate-500">
-                  <th className="p-4 pl-6">Research Question</th>
-                  <th className="p-4">Expected Source</th>
-                  <th className="p-4">Retrieved Source</th>
-                  <th className="p-4">Anomaly Category</th>
-                  <th className="p-4 pr-6">Validation Result Summary</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/60 text-xs">
-                {filteredFailures.map((fail) => (
-                  <tr key={fail.id} className="hover:bg-slate-800/30 transition-colors" id={`fail-row-${fail.id}`}>
-                    {/* Question */}
-                    <td className="p-4 pl-6 text-slate-200 font-semibold max-w-[220px]">
-                      {fail.question}
-                    </td>
-
-                    {/* Expected */}
-                    <td className="p-4 font-mono text-[11px] text-slate-400 font-bold">
-                      {fail.expectedSource}
-                    </td>
-
-                    {/* Retrieved */}
-                    <td className={`p-4 font-mono text-[11px] font-bold ${
-                      fail.retrievedSource === 'No Context Retrieved' ? 'text-red-400' : 'text-slate-500'
-                    }`}>
-                      {fail.retrievedSource}
-                    </td>
-
-                    {/* Category badge */}
-                    <td className="p-4">
-                      <span className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded font-mono font-bold uppercase tracking-wider ${
-                        fail.category === 'No Context Retrieved' ? 'bg-red-500/10 text-red-400 border border-red-500/20' :
-                        fail.category === 'Irrelevant Chunk' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
-                        'bg-pink-500/10 text-pink-400 border border-pink-500/20'
-                      }`}>
-                        <XOctagon className="w-3 h-3 shrink-0" />
-                        {fail.category}
-                      </span>
-                    </td>
-
-                    {/* Result */}
-                    <td className="p-4 pr-6 text-slate-400 text-[11px] leading-relaxed max-w-[280px]">
-                      {fail.result}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-    </div>
-  );
+  return <div className="space-y-6 animate-fade-in" id="evaluation-page">
+    <div className="flex flex-col sm:flex-row justify-between gap-4"><div><h1 className="text-2xl font-bold text-slate-100 flex items-center gap-2"><BarChart4 className="w-6 h-6 text-teal-400" />RAG Performance Evaluation</h1><p className="text-xs text-slate-400">Durable metrics computed with the production retrieval implementation.</p></div><button onClick={() => void evaluation.run()} disabled={evaluation.running} className="flex items-center justify-center gap-2 bg-teal-500 text-slate-950 px-4 py-2 rounded-lg text-xs font-bold uppercase disabled:opacity-40"><Play className="w-4 h-4" />{evaluation.running ? `Running ${evaluation.activeRun?.progressPercent ?? 0}%` : 'Run Retrieval Evaluation'}</button></div>
+    {evaluation.error && <ErrorNotice message={evaluation.error} retry={() => void evaluation.reload()} />}
+    {evaluation.loading && <LoadingNotice label="Loading latest evaluation…" />}
+    {!evaluation.loading && !run && <div className="p-10 text-center border border-slate-800 bg-slate-900 rounded-xl text-sm text-slate-400">No evaluation run is available. Start a retrieval evaluation to populate this page.</div>}
+    {run && <>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">{[
+        ['Recall@5', formatPercent(run.metrics.recallAt5), Target],
+        ['MRR', run.metrics.mrr?.toFixed(3) ?? 'N/A', GitBranch],
+        ['Fallback Accuracy', formatPercent(run.metrics.fallbackAccuracy), ShieldCheck],
+        ['Mean Retrieval', run.metrics.meanRetrievalLatencyMs === null ? 'N/A' : `${run.metrics.meanRetrievalLatencyMs.toFixed(1)} ms`, Clock],
+      ].map(([label, value, Icon]) => <div key={String(label)} className="bg-slate-900 border border-slate-800 p-4 rounded-xl"><div className="flex justify-between"><p className="text-[10px] uppercase font-mono text-slate-500">{String(label)}</p><Icon className="w-4 h-4 text-teal-400" /></div><p className="text-2xl font-bold mt-2">{String(value)}</p></div>)}</div>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6"><div className="lg:col-span-8 bg-slate-900 border border-slate-800 p-5 rounded-xl"><div className="flex flex-col sm:flex-row justify-between gap-3 border-b border-slate-800 pb-3 mb-5"><div><h2 className="text-xs font-bold uppercase font-mono text-slate-300">Domain metrics</h2><p className="text-[10px] text-slate-500">{run.evaluatedQuestions} / {run.totalQuestions} cases · dataset {run.datasetVersion}</p></div><select value={metric} onChange={event => setMetric(event.target.value as Metric)} className="bg-slate-950 border border-slate-700 rounded px-3 py-1 text-xs"><option value="recallAt5">Recall@5</option><option value="mrr">MRR</option><option value="fallbackAccuracy">Fallback accuracy</option><option value="citationRate">Citation rate</option></select></div><div className="space-y-4">{evaluation.latest?.domains.map(item => <DomainBar key={item.domain} item={item} metric={metric} />)}</div></div><aside className="lg:col-span-4 bg-slate-900 border border-slate-800 p-5 rounded-xl space-y-4"><h2 className="text-xs font-bold uppercase font-mono flex gap-2"><ShieldCheck className="w-4 h-4 text-teal-400" />Run configuration</h2><Fact label="Status" value={run.status} /><Fact label="Mode" value={run.mode} /><Fact label="Index" value={run.indexVersion || 'unavailable'} /><Fact label="Dataset hash" value={run.datasetHash.slice(0, 16)} /><Fact label="Context threshold" value={String(system?.retrieval.minimumContextScore ?? 'unavailable')} /><Fact label="Recall@1 / 3 / 10" value={`${formatPercent(run.metrics.recallAt1)} / ${formatPercent(run.metrics.recallAt3)} / ${formatPercent(run.metrics.recallAt10)}`} /><Fact label="Citation rate" value={formatPercent(run.metrics.citationRate)} /><Fact label="Manual correctness / groundedness" value={`${formatPercent(run.metrics.answerCorrectness)} / ${formatPercent(run.metrics.groundedness)}`} /><p className="text-[10px] text-slate-500">Unavailable manual or generation metrics remain N/A; the UI never substitutes invented values.</p></aside></div>
+      <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden"><div className="p-4 border-b border-slate-800 flex flex-col sm:flex-row justify-between gap-3"><div><h2 className="text-xs font-bold uppercase font-mono flex gap-2"><AlertOctagon className="w-4 h-4 text-red-400" />Failure analysis ({evaluation.latest?.failures.length ?? 0})</h2><p className="text-[10px] text-slate-500">Stable categories derived from persisted question results.</p></div><label className="relative"><Search className="absolute left-3 top-2.5 w-3.5 h-3.5 text-slate-500" /><input value={search} onChange={event => setSearch(event.target.value)} placeholder="Search failures" className="bg-slate-950 border border-slate-700 rounded-lg pl-8 pr-3 py-2 text-xs" /></label></div>{failures.length === 0 ? <div className="py-10 text-center text-xs text-slate-500"><CheckCircle2 className="w-8 h-8 text-teal-400 mx-auto mb-2" />No failure records match.</div> : <div className="overflow-x-auto"><table className="w-full text-left"><thead><tr className="bg-slate-950 text-[10px] uppercase font-mono text-slate-500"><th className="p-4">Question</th><th className="p-4">Expected</th><th className="p-4">Retrieved</th><th className="p-4">Category</th><th className="p-4">Summary</th></tr></thead><tbody className="divide-y divide-slate-800">{failures.map(item => <tr key={item.id} className="text-xs"><td className="p-4 max-w-xs">{item.question}</td><td className="p-4 font-mono text-[10px]">{item.expectedDocumentName || 'Unsupported case'}{item.expectedPageNumber ? ` p.${item.expectedPageNumber}` : ''}</td><td className="p-4 font-mono text-[10px]">{item.retrievedDocumentName || 'No source'}{item.firstRelevantRank ? ` · rank ${item.firstRelevantRank}` : ''}</td><td className="p-4"><span className="text-[10px] text-red-300 bg-red-500/10 px-2 py-1 rounded">{item.category}</span></td><td className="p-4 text-[11px] text-slate-400 max-w-sm">{item.summary}</td></tr>)}</tbody></table></div>}</div>
+    </>}
+  </div>;
 }
+
+function DomainBar({ item, metric }: { item: EvaluationDomain; metric: Metric }) { const value = item[metric]; const width = value === null ? 0 : Math.max(0, Math.min(100, value * 100)); const coverage = `${item.documentCount} ${item.documentCount === 1 ? 'document' : 'documents'} · ${item.questionCount} ${item.questionCount === 1 ? 'evaluation case' : 'evaluation cases'}`; return <div><div className="flex justify-between text-xs gap-3"><span>{item.domain} <small className="text-slate-500">({coverage})</small></span><span>{item.questionCount === 0 ? 'Not evaluated' : formatPercent(value)}</span></div><div className="h-3 bg-slate-950 border border-slate-800 rounded mt-1 overflow-hidden"><div className="h-full bg-teal-500" style={{ width: `${width}%` }} /></div>{item.questionCount === 0 && <p className="mt-1 text-[10px] text-slate-500">Upload is indexed; add a versioned evaluation case to measure this domain.</p>}</div>; }
+function Fact({ label, value }: { label: string; value: string }) { return <div><p className="text-[9px] text-slate-500 uppercase font-mono">{label}</p><p className="text-xs text-slate-300 break-all">{value}</p></div>; }

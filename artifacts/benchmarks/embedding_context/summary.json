@@ -1,0 +1,186 @@
+{
+  "benchmark_version": 1,
+  "started_at_utc": "2026-07-20T08:53:57.305086+00:00",
+  "completed_at_utc": "2026-07-20T09:12:43.871064+00:00",
+  "inputs": {
+    "cleaned_pages_path": "artifacts/preprocessing/cleaned_pages.jsonl",
+    "cleaned_pages_sha256": "2dc15f588c6aa0576c72a7382563ca3992a4f25e90c29eac07af112eed0b0fd5",
+    "gold_path": "artifacts/evaluation/gold_questions.jsonl",
+    "gold_sha256": "691f3f42d7a016ee2ec4401933faedd572a942cb7ca51d1ade45ded4d846ddd4",
+    "page_records": 1848,
+    "gold_questions": 33,
+    "answerable_questions": 30
+  },
+  "environment": {
+    "platform": "macOS-26.5.2-arm64-arm-64bit",
+    "python": "3.12.13",
+    "torch": "2.13.0",
+    "transformers": "5.14.1",
+    "sentence_transformers": "5.6.0",
+    "numpy": "2.5.1",
+    "faiss": "1.14.3",
+    "requested_device": "mps"
+  },
+  "retrieval_config": {
+    "k_values": [
+      1,
+      3,
+      5,
+      10
+    ],
+    "fetch_multiplier": 4,
+    "duplicate_similarity_threshold": 0.97
+  },
+  "results": [
+    {
+      "config": {
+        "key": "minilm",
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+        "effective_max_tokens": 256,
+        "chunk_target_tokens": 220,
+        "chunk_max_tokens": 240,
+        "chunk_overlap_tokens": 60,
+        "document_prefix": "",
+        "query_prefix": "",
+        "trust_remote_code": false,
+        "batch_size": 32
+      },
+      "runtime": {
+        "device": "mps:0",
+        "torch_dtype": "torch.float32",
+        "model_load_seconds": 3.609839374999865,
+        "chunking_seconds": 66.5843605830014,
+        "embedding_seconds": 70.10857937500987,
+        "embedding_ms_per_chunk": 9.556785629090767,
+        "index_build_seconds": 0.020938625006238
+      },
+      "model": {
+        "sentence_transformer_max_seq_length": 256,
+        "tokenizer_model_max_length": 256,
+        "tokenizer_class": "BertTokenizer",
+        "embedding_dimension": 384,
+        "parameter_count": 22713216,
+        "normalization": "L2 float32"
+      },
+      "chunks": {
+        "count": 7336,
+        "documents": 60,
+        "content_tokens": {
+          "minimum": 7,
+          "maximum": 240,
+          "mean": 197.12540894220282,
+          "median": 218.0,
+          "p95": 239.0
+        },
+        "model_input_tokens": {
+          "minimum": 9,
+          "maximum": 242,
+          "mean": 199.12540894220282,
+          "median": 220.0,
+          "p95": 241.0
+        },
+        "overlap_tokens_when_present": {
+          "minimum": 1,
+          "maximum": 63,
+          "mean": 45.29609360256652,
+          "median": 48,
+          "p95": 60.0
+        },
+        "chunks_above_effective_model_limit": 0
+      },
+      "storage": {
+        "embedding_bytes": 11268096,
+        "serialized_flat_ip_index_bytes": 11268141
+      },
+      "retrieval": {
+        "questions": 33,
+        "answerable_questions": 30,
+        "unsupported_questions": 3,
+        "recall_at_1": 0.8666666666666667,
+        "recall_at_3": 0.9666666666666667,
+        "recall_at_5": 0.9666666666666667,
+        "recall_at_10": 1.0,
+        "mrr": 0.9055555555555556,
+        "retrieval_mean_ms": 76.8820442105855,
+        "retrieval_median_ms": 22.144916001707315,
+        "retrieval_p95_ms": 347.60220780153753
+      }
+    },
+    {
+      "config": {
+        "key": "nomic",
+        "model_name": "nomic-ai/nomic-embed-text-v1.5",
+        "revision": "e9b6763023c676ca8431644204f50c2b100d9aab",
+        "effective_max_tokens": 8192,
+        "chunk_target_tokens": 550,
+        "chunk_max_tokens": 700,
+        "chunk_overlap_tokens": 90,
+        "document_prefix": "search_document: ",
+        "query_prefix": "search_query: ",
+        "trust_remote_code": false,
+        "batch_size": 8
+      },
+      "runtime": {
+        "device": "mps:0",
+        "torch_dtype": "torch.float32",
+        "model_load_seconds": 8.507636208989425,
+        "chunking_seconds": 65.14339912499418,
+        "embedding_seconds": 534.4344961250026,
+        "embedding_ms_per_chunk": 170.41916330516665,
+        "index_build_seconds": 0.029522207987611182
+      },
+      "model": {
+        "sentence_transformer_max_seq_length": 8192,
+        "tokenizer_model_max_length": 8192,
+        "tokenizer_class": "BertTokenizer",
+        "embedding_dimension": 768,
+        "parameter_count": 136731648,
+        "normalization": "L2 float32"
+      },
+      "chunks": {
+        "count": 3136,
+        "documents": 60,
+        "content_tokens": {
+          "minimum": 7,
+          "maximum": 700,
+          "mean": 415.0797193877551,
+          "median": 511.0,
+          "p95": 599.25
+        },
+        "model_input_tokens": {
+          "minimum": 13,
+          "maximum": 706,
+          "mean": 421.0797193877551,
+          "median": 517.0,
+          "p95": 605.25
+        },
+        "overlap_tokens_when_present": {
+          "minimum": 2,
+          "maximum": 93,
+          "mean": 73.25038284839204,
+          "median": 78.0,
+          "p95": 90.0
+        },
+        "chunks_above_effective_model_limit": 0
+      },
+      "storage": {
+        "embedding_bytes": 9633792,
+        "serialized_flat_ip_index_bytes": 9633837
+      },
+      "retrieval": {
+        "questions": 33,
+        "answerable_questions": 30,
+        "unsupported_questions": 3,
+        "recall_at_1": 0.8333333333333334,
+        "recall_at_3": 0.9333333333333333,
+        "recall_at_5": 0.9333333333333333,
+        "recall_at_10": 0.9666666666666667,
+        "mrr": 0.888095238095238,
+        "retrieval_mean_ms": 47.840123695398994,
+        "retrieval_median_ms": 27.851124992594123,
+        "retrieval_p95_ms": 138.65913319750686
+      }
+    }
+  ]
+}

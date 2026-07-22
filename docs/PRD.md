@@ -59,7 +59,7 @@ This dataset is preferable to a random set of files because it:
 4. Makes evaluation possible through a manually curated set of questions and source-supported answers.
 5. Supports an interviewer discussion about domain shift, data quality, provenance, and retrieval limitations.
 
-For every document, store source URL or origin, domain, file type, and license/usage note in a dataset manifest.
+The local filesystem is the source of truth for the corpus. During ingestion, derive metadata from the file and its location, then persist that metadata with the processed records and chunks. The original source URL and license/usage note are optional fields: retain them only when they are supplied and trustworthy.
 
 ## 4. Machine-Learning Flow
 
@@ -67,14 +67,15 @@ For every document, store source URL or origin, domain, file type, and license/u
 
 1. User uploads or selects a document.
 2. The application identifies its type.
-3. Text is extracted with page-level metadata where available.
-4. Extraction noise is removed:
+3. The application creates an ingestion record with a generated document ID, file name, file type, folder-derived domain (or `user-uploaded`), upload time, and optional user-supplied title, source URL, and license note.
+4. Text is extracted with page-level metadata where available.
+5. Extraction noise is removed:
    - repeated headers and footers
    - excessive whitespace
    - broken line breaks
    - empty pages
    - non-informative symbols
-5. The cleaned text is divided into context-preserving chunks.
+6. The cleaned text is divided into context-preserving chunks.
 
 ### Chunking
 
@@ -162,10 +163,10 @@ The notebook is the learning and experimentation environment. It should be organ
 
 ### Section 2 — Dataset Collection and Inspection
 
-- Load the dataset manifest.
+- Discover supported files directly from the corpus folders.
 - Display document counts by domain and file type.
 - Inspect a few representative documents.
-- Explain source quality, diversity, and known dataset limitations.
+- Explain source quality, diversity, and known dataset limitations. Note that provenance fields are optional and are not trusted unless verified.
 
 ### Section 3 — Text Extraction
 
@@ -242,7 +243,6 @@ Document the effect of chunk size, overlap, top-k selection, and model choice. R
 After the notebook is validated, move reusable functions into a maintainable application structure.
 
 ```text
-rag-document-qa/
   backend/
     app/
       api/
@@ -383,7 +383,7 @@ The local application is complete when:
 
 ### Day 1 — Research Notebook and Corpus
 
-- Prepare dataset manifest and gather 50–100 documents.
+- Gather 50–100 documents in domain folders; ingestion generates the working metadata records.
 - Complete extraction, cleaning, chunking, embedding, and FAISS notebook sections.
 - Test semantic retrieval with representative questions.
 - Create the first evaluation question set.
